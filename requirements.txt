@@ -1,3 +1,16 @@
-flask==2.0.1
-jupyter==1.0.0
-nbconvert==6.0.7 
+# Libs utilisées dans le notebook
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+xgboost
+lightgbm
+
+# Pour exécuter le notebook et extraire le modèle
+nbformat
+nbconvert
+jupyter
+
+# Pour l'API Flask
+flask

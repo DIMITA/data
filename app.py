@@ -1,46 +1,42 @@
 from flask import Flask, request, jsonify
-import os
-import subprocess
-import sys
+import pickle
+import numpy as np
+
+# Charger le modèle entraîné (RandomForestClassifier)
+with open("model.pkl", "rb") as f:
+    model = pickle.load(f)
 
 app = Flask(__name__)
 
-@app.route('/', methods=['POST'])
-def convert_notebook():
-    if 'file' not in request.files:
-        return jsonify({'error': 'Aucun fichier n\'a été envoyé'}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'Aucun fichier sélectionné'}), 400
-    
-    if not file.filename.endswith('.ipynb'):
-        return jsonify({'error': 'Le fichier doit être un notebook Jupyter (.ipynb)'}), 400
-    
-    # Sauvegarder le fichier temporairement
-    temp_path = os.path.join('uploads', file.filename)
-    os.makedirs('uploads', exist_ok=True)
-    file.save(temp_path)
-    
-    try:
-        # Utiliser le script de conversion
-        subprocess.check_call([sys.executable, 'convert_notebook.py', temp_path])
-        
-        # Lire le contenu du fichier converti
-        py_file = temp_path.replace('.ipynb', '.py')
-        with open(py_file, 'r') as f:
-            content = f.read()
-        
-        # Nettoyer les fichiers temporaires
-        os.remove(temp_path)
-        os.remove(py_file)
-        
-        return jsonify({
-            'success': True,
-            'content': content
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+@app.route("/")
+def home():
+    return "Landsapp API Flask prête 🚀"
 
-if __name__ == '__main__':
-    app.run(debug=True) 
+@app.route("/api", methods=["POST"])
+def predict():
+    try:
+        data = request.json
+
+        # Extraire les 8 paramètres attendus
+        features = [
+            data["ni"],
+            data["phosphore"],
+            data["potassium"],
+            data["magnesium"],
+            data["ph"],
+            data["temperature"],
+            data["pluviometrie"],
+            data["humidite"]
+        ]
+
+        features_array = np.array(features).reshape(1, -1)
+
+        prediction = model.predict(features_array)
+
+        return jsonify({"cultures": prediction.tolist()})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+if __name__ == "__main__":
+    app.run(debug=True)
