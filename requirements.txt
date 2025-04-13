@@ -14,3 +14,4 @@ jupyter
 
 # Pour l'API Flask
 flask
+flask-cors
